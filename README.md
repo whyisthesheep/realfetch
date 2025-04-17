@@ -1,4 +1,4 @@
-# realfetch
+# Realfetch
 A fetch script made with rust
 
 > [!IMPORTANT]
