@@ -1,7 +1,5 @@
 use sysinfo::{System, Disks};
-use std::env;
 
-#[allow(dead_code)]
 #[derive(Debug)]
 struct FetchData {
     user: String,
@@ -20,42 +18,31 @@ struct FetchData {
     local_ip: String,
 }
 
-trait PlatOp {
-    fn fetch_data() -> FetchData;
-}
+fn fetch_data() -> FetchData {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    let osinf = os_info::get();
 
-#[cfg(target_os = "windows")]
-struct Win;
+    let (disk_used, disk_total, disk_usage) = get_drive();
 
-#[cfg(target_os = "windows")]
-impl PlatOp for Win {
-    fn fetch_data() -> FetchData {
-        let mut sys = System::new_all();
-        sys.refresh_all();
-        let osinf = os_info::get();
-
-        let (disk_used, disk_total, disk_usage) = get_drive();
-
-        FetchData {
-            user: whoami::username(),
-            host: whoami::fallible::hostname().unwrap_or("Windows".to_string()),
-            os: format!("{} {} {} ({})", osinf.os_type(), osinf.edition().unwrap_or(""), osinf.version(), osinf.bitness()),
-            arch: env::consts::ARCH.to_string(),
-            uptime: format_uptime(sysinfo::System::uptime()),
-            cpu: sys.cpus()[0].brand().trim().to_string(),
-            cores: num_cpus::get_physical().to_string(),
-            threads: num_cpus::get().to_string(),
-            memory: format!("{:.1} GB", sys.used_memory() as f64 / 1073741824.0), //1024 cubed
-            memory_cap: format!("{:.1} GB", sys.total_memory() as f64 / 1073741824.0),
-            disk: format!("{:.1} GB", disk_used),
-            disk_cap: format!("{:.1} GB", disk_total),
-            disk_usage: format!("{:.1}%", disk_usage),
-            local_ip: local_ip_address::local_ip().unwrap().to_string(),
-        }
+    FetchData {
+        user: whoami::username(),
+        host: whoami::fallible::hostname().unwrap_or("Windows".to_string()),
+        os: format!("{} {} {} ({})", osinf.os_type(), osinf.edition().unwrap_or(""), osinf.version(), osinf.bitness()),
+        arch: whoami::arch().to_string(),
+        uptime: format_uptime(sysinfo::System::uptime()),
+        cpu: sys.cpus()[0].brand().trim().to_string(),
+        cores: num_cpus::get_physical().to_string(),
+        threads: num_cpus::get().to_string(),
+        memory: format!("{:.1} GB", sys.used_memory() as f64 / 1073741824.0), //1024 cubed
+        memory_cap: format!("{:.1} GB", sys.total_memory() as f64 / 1073741824.0),
+        disk: format!("{:.1} GB", disk_used),
+        disk_cap: format!("{:.1} GB", disk_total),
+        disk_usage: format!("{:.1}%", disk_usage),
+        local_ip: local_ip_address::local_ip().unwrap().to_string(),
     }
 }
 
-#[cfg(target_os = "windows")]
 fn get_drive() -> (f64, f64, f64) {
     let disks = Disks::new_with_refreshed_list();
     if let Some(disk) = disks.list().first() {
@@ -80,29 +67,46 @@ fn get_drive() -> (f64, f64, f64) {
     }
 }
 
-#[cfg(target_os = "windows")]
-fn format_uptime(seconds: u64) -> String {
-    let days = seconds / (24 * 3600); 
-    let hours = (seconds % (24 * 3600)) / 3600; //yes this could be more concise but I dont care
-    let minutes = (seconds % 3600) / 60;
-    format!("{}d {}h {}m", days, hours, minutes)
+fn format_uptime(s: u64) -> String {
+    format!(
+        "{}d {}h {}m",
+        s / (24 * 3600),
+        (s % (24 * 3600)) / 3600,
+        (s % 3600) / 60
+    )
 }
 
 fn printfetch(x: FetchData) {
     let userhost = format!("{}@{}", x.user, x.host);
-    let mut bar = "".to_string();
-    (0..=userhost.len()).into_iter().for_each(|_| {
-        bar.push('=');
-    });
-    bar.pop();
-
+    let bar = "=".repeat(userhost.len());
+    
     println!(
-        "\n{}@{}\n{}\n\n| OS: {}\n| Architecture: {}\n| Uptime: {}\n| CPU: {}\n| CPU Cores: {}, Threads: {}\n| RAM: {}/{}\n| Disk: {}/{} (Usage {})\n| Local IP: {}\n",
-        x.user, x.host, bar, x.os, x.arch, x.uptime, x.cpu, x.cores, x.threads, x.memory, x.memory_cap, x.disk, x.disk_cap, x.disk_usage, x.local_ip
+        "\n{userhost}\n{bar}\n\n\
+         | OS: {os}\n\
+         | Architecture: {arch}\n\
+         | Uptime: {uptime}\n\
+         | CPU: {cpu}\n\
+         | CPU Cores: {cores}, Threads: {threads}\n\
+         | RAM: {memory}/{memory_cap}\n\
+         | Disk: {disk}/{disk_cap} (Usage {disk_usage})\n\
+         | Local IP: {local_ip}\n",
+        userhost = userhost,
+        bar = bar,
+        os = x.os,
+        arch = x.arch,
+        uptime = x.uptime,
+        cpu = x.cpu,
+        cores = x.cores,
+        threads = x.threads,
+        memory = x.memory,
+        memory_cap = x.memory_cap,
+        disk = x.disk,
+        disk_cap = x.disk_cap,
+        disk_usage = x.disk_usage,
+        local_ip = x.local_ip
     );
 }
 
-#[cfg(target_os = "windows")]
 fn main() {
-    printfetch(Win::fetch_data());
+    printfetch(fetch_data());
 }
