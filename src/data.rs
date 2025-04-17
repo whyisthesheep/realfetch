@@ -33,7 +33,7 @@ pub mod fetch {
 
         (
             whoami::username(),
-            whoami::fallible::hostname().unwrap_or("Windows".to_string()),
+            whoami::fallible::hostname().unwrap_or("Generic".to_string()),
             format!("{} {} {} ({})", osinf.os_type(), osinf.edition().unwrap_or(""), osinf.version(), osinf.bitness()),
             format_uptime(sysinfo::System::uptime()),
             local_ip_address::local_ip().unwrap().to_string()
@@ -49,11 +49,11 @@ pub mod fetch {
             num_cpus::get_physical().to_string(),
             num_cpus::get().to_string(),
             format!("{:.1} GB", sys.used_memory() as f64 / 1073741824.0),
-            format!("{:.1} GB", sys.total_memory() as f64 / 1073741824.0)    
+            format!("{:.1} GB", sys.total_memory() as f64 / 1073741824.0)
         )
     }
 
-    pub fn format_uptime(s: u64) -> String {
+    fn format_uptime(s: u64) -> String {
         format!(
             "{}d {}h {}m",
             s / (24 * 3600),
