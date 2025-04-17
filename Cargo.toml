@@ -1,0 +1,13 @@
+[package]
+name = "realfetch"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+local-ip-address = "0.6.3"
+machine-info = "1.0.9"
+num_cpus = "1.16.0"
+os_info = "3.10.0"
+serde = { version = "1.0.219", features = ["derive"] }
+sysinfo = "0.34.2"
+whoami = "1.6.0"
