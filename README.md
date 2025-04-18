@@ -2,7 +2,7 @@
 A fetch script made with rust
 
 > [!IMPORTANT]
-> Untested on Linux, MacOS, *BSD etc
+> Only tested on Windows and Linux
 
 # Building
 1. Clone repo `git clone https://github.com/whyisthesheep/realfetch.git`
@@ -13,3 +13,4 @@ A fetch script made with rust
 The main objective is to speed up the program
 - [ ] Add threading
 - [ ] Reduce external crates used
+- [ ] Fix disk reporting on linux
